@@ -1,0 +1,100 @@
+<?
+class Tip extends RESTful_Model {
+	
+	protected $_name = 'tips_summary';
+	# protected $_view_name = 'current_tips'; # only for models using views
+	# protected $_primary = 'id'; # only for models using views
+	
+	protected $_referenceMap    = array(
+      'Sport' => array(
+			'columns'           => array('sport'),
+			'refTableClass'     => 'Sport',
+			'refColumns'        => array('subsport')
+        ),
+      'Market' => array(
+			'columns'           => array('marketid'),
+			'refTableClass'     => 'Market',
+			'refColumns'        => array('marketid')
+        ),
+    );
+	
+	protected $accessible_attributes = array( 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid', '(sports.sport)', 'odds', 'bookmaker', 'event_start', 'win_tips', 'ew_tips', 'lay_tips', 'nap_tips', '(c.win_tips_count), (sports.sportid) AS sportid, (sports.id) AS subsport_id' );
+	
+	public function init() {
+		# only for models using views
+		# $this->_base_name = $this->_name;
+		# $this->_name = $this->_view_name;
+		# parent::_setupTableName();
+	}
+	
+	public function hot( $params = array() ) {
+	
+		$accessible_attributes = array( 'odds' => '(odds + 1)', 
+																		'sportname' => '(sports.sport)', 
+																		'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
+																		'odds_rounded' => '(ROUND( odds, 2 ) + 1)',
+																		'market_name' => '(markets.name)',
+																		'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
+																		'bookie_id' => '(bookies.id)' );
+		
+		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		$select_confidence = $this->select()
+															->from( 'tips_summary', array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+															->where( 'event_start >= NOW()' )
+															->group( 'eventname' )->group( 'marketid' )
+															->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
+		
+		$select = $this->select()
+									->from( $this->getTableName(), $this->selectable_attributes )
+									->join( 'sports', 'tips_summary.sport = sports.subsport', array() )
+									->join( 'markets', 'tips_summary.marketid = markets.marketid', array() )
+									->join( 'bookies', 'tips_summary.bookmaker = bookies.bookmaker', array() )
+									->join( array( 'c' => $select_confidence ), 'tips_summary.eventname = c.eventname AND tips_summary.marketid = c.marketid', array() )
+									->where( 'event_start >= NOW()' );
+		
+		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
+		if ( !empty( $params ) ) $select = $this->applyParams( $params, $select );
+		
+		# add default query parts if not manually set
+		if ( ! (bool) $select->getPart( Zend_Db_Select::ORDER ) ) 	$select->order( array( 'win_tips DESC', 'odds DESC' ) );
+		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
+		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
+		
+		# echo $select;
+		return $this->cacheFetchAll( $select );
+	}
+	
+	public function bySport( $params = array() ) {
+		
+		$accessible_attributes = array( 'odds' => '(odds + 1)' );
+		
+		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		$select = $this->select()
+									->from( $this->getTableName(), $this->selectable_attributes )
+									->join( 'sports', 'tips_summary.sport = sports.subsport', array() )
+									->where( 'sports.sport = ?', $params['sport'] );
+		
+		unset( $params['sport'] );
+		
+		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
+		if ( !empty( $params ) ) $select = $this->applyParams( $params, $select );
+		
+		# add default query parts if not manually set
+		if ( ! (bool) $select->getPart( Zend_Db_Select::ORDER ) ) 	$select->order( array( 'win_tips DESC', 'odds DESC' ) );
+		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
+		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
+		
+		# echo $select->__toString();
+		return $this->cacheFetchAll( $select );
+		
+	}
+	
+	protected function custom_filter( $value, Zend_DB_Select $select ) {
+		$select->where('selection LIKE ? OR tips_summary.eventname LIKE ?', '%' . $value . '%');
+	}
+
+}
