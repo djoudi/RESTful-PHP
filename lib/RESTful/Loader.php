@@ -65,11 +65,14 @@ abstract class RESTful_Loader extends RESTful_Application {
 		require_once BASE_PATH . CF_PATH . $file . EXT;
 	}
 	
-	public static function loadDbConfig( $adapter_name ) {
+	public static function loadDbConfig( $adapter_name, $return_adapter = false ) {
 	
 		require_once BASE_PATH . DB_CONF . EXT;
 		
-		RESTful_Model::$db_adapter = $$adapter_name;
+		$adapter = RESTful_Application::$db_conf[$adapter_name];
+		
+		if ( $return_adapter ) return $adapter;
+		else RESTful_Model::$db_adapter = $adapter; 
 		
 	}
 	

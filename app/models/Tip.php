@@ -1,7 +1,7 @@
 <?
 class Tip extends RESTful_Model {
 	
-	protected $_name = 'tips_summary';
+	protected $_name = 'tips_mobile';
 	# protected $_view_name = 'current_tips'; # only for models using views
 	# protected $_primary = 'id'; # only for models using views
 	
@@ -95,7 +95,7 @@ class Tip extends RESTful_Model {
 	
 	public function eventsWithTips( $sport = null ) {
 		
-		$accessible_attributes = array( 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid' );
+		$accessible_attributes = array( 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid', 'event_start', 'LOWER( ( sports.sport ) ) AS sport', 'LOWER( ( sports.subsport ) ) AS subsport' );
 		
 		$this->selectable_attributes = $this->accessible_attributes = $accessible_attributes;
 		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
@@ -105,12 +105,21 @@ class Tip extends RESTful_Model {
 									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
 									->where( 'event_start >= NOW()' )
 									->where( $sport ? 'sport = "' . $sport . '"' : 1 )
-									->group( 'eventname' )->group( $this->_name . '.sport' )
+									->group( 'selection' )->group( 'eventname' )
 									->order( 'marketid', 'ASC')->order( 'eventname', 'ASC' );
 		
-		echo $select->__toString();
+		# echo $select->__toString();
 		return $this->cacheFetchAll( $select );
 		
+	}
+	
+	public function updateBestOdds( $event, $odds ) {
+		
+		$row = $this->fetchRow( $this->select()->where( 'id = ?', $event['id'] ) );
+		$row->odds = $odds['odds_decimal_value'];
+		$row->bookmaker = $odds['provider_name'];
+		
+		$row->save();
 	}
 	
 	protected function custom_filter( $value, Zend_DB_Select $select ) {

@@ -7,6 +7,8 @@ abstract class RESTful_Application {
 	public static $loadedModels;
 	public static $_url;
 	
+	protected static $db_conf = array(); # db connections configurations 
+	
 	public static function init() {
 		
 		# sleep( rand(0, 10) );
