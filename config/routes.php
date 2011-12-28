@@ -33,3 +33,4 @@ RESTful_Route::mapResource( 'authentications' );
 RESTful_Route::map( 'authentications/log_off', 'authentications#destroy' );
 
 RESTful_Route::map( 'odds/import', 'odds#import' );
+RESTful_Route::map( 'odds/best', 'odds#best' );

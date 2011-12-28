@@ -2,6 +2,7 @@
 class Sport extends RESTful_Model {
 
 	protected $_name = 'sports';
+	protected $_primary = 'id';
 	protected $_dependentTables = array( 'tips_summary' );
 	protected $accessible_attributes = array( 'id', 'subsport', 'sport', 'sportid', 'tipable', 'category' );
 	

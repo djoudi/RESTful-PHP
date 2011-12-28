@@ -18,7 +18,7 @@ define( 'HTML_APP_HELPERS', 'html_image_tag, html_a_tag' ); # html output helper
 
 # setup includes
 set_include_path( BASE_PATH . ':' . BASE_PATH . "lib:" . ini_get( "include_path" ) ); # app libs
-set_include_path( '/Users/adrian/pear/share/pear:' . ini_get( "include_path" ) );	# local pear
+set_include_path( BASE_PATH . 'lib/PEAR:' . ini_get( "include_path" ) );	# local pear
 
 
 # some defaults

@@ -28,7 +28,7 @@ class RESTful_Controller_View extends RESTful_Controller {
 		extract( RESTful_Application::$instance_variables );
 		
 		ob_start();
-		RESTful_Loader::loadView( $this );
+		RESTful_Loader::loadView( $this, $format );
 		$output = ob_get_contents(); ob_end_clean();
 		
 		if ( $return ) return $output;

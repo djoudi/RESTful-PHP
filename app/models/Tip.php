@@ -41,17 +41,17 @@ class Tip extends RESTful_Model {
 		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
 		
 		$select_confidence = $this->select()
-															->from( 'tips_summary', array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+															->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
 															->where( 'event_start >= NOW()' )
 															->group( 'eventname' )->group( 'marketid' )
 															->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
 		
 		$select = $this->select()
 									->from( $this->getTableName(), $this->selectable_attributes )
-									->join( 'sports', 'tips_summary.sport = sports.subsport', array() )
-									->join( 'markets', 'tips_summary.marketid = markets.marketid', array() )
-									->join( 'bookies', 'tips_summary.bookmaker = bookies.bookmaker', array() )
-									->join( array( 'c' => $select_confidence ), 'tips_summary.eventname = c.eventname AND tips_summary.marketid = c.marketid', array() )
+									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
+									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
+									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
 									->where( 'event_start >= NOW()' );
 		
 		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
@@ -75,7 +75,7 @@ class Tip extends RESTful_Model {
 		
 		$select = $this->select()
 									->from( $this->getTableName(), $this->selectable_attributes )
-									->join( 'sports', 'tips_summary.sport = sports.subsport', array() )
+									->join( 'sports', $this->_name . '.sport = sports.subsport', array() )
 									->where( 'sports.sport = ?', $params['sport'] );
 		
 		unset( $params['sport'] );
@@ -93,8 +93,28 @@ class Tip extends RESTful_Model {
 		
 	}
 	
+	public function eventsWithTips( $sport = null ) {
+		
+		$accessible_attributes = array( 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid' );
+		
+		$this->selectable_attributes = $this->accessible_attributes = $accessible_attributes;
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		$select = $this->select()
+									->from( $this->_name, $this->selectable_attributes )
+									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->where( 'event_start >= NOW()' )
+									->where( $sport ? 'sport = "' . $sport . '"' : 1 )
+									->group( 'eventname' )->group( $this->_name . '.sport' )
+									->order( 'marketid', 'ASC')->order( 'eventname', 'ASC' );
+		
+		echo $select->__toString();
+		return $this->cacheFetchAll( $select );
+		
+	}
+	
 	protected function custom_filter( $value, Zend_DB_Select $select ) {
-		$select->where('selection LIKE ? OR tips_summary.eventname LIKE ?', '%' . $value . '%');
+		$select->where('selection LIKE ? OR ' . $this->_name . '.eventname LIKE ?', '%' . $value . '%');
 	}
 
 }

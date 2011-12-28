@@ -17,8 +17,10 @@ class Odd extends RESTful_Model {
 		
 	}
 	
-	private function sports() {
-		$select = $this->select()
+	public function best() {
+		
+		
+		
 	}
 	
 }

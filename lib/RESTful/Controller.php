@@ -21,6 +21,7 @@ abstract class RESTful_Controller extends RESTful_Application {
 	}
 	
 	protected function render( $format = null, $return = false ) {
+		
 		$this->getView()->render( $format ? $format : RESTful_Application::getRequest()->getFormat(), $return );
 	}
 	

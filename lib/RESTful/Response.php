@@ -58,9 +58,12 @@ class RESTful_Response extends RESTful_Application {
 	
 	public static function autorender( $object, $xml_options, $cached ) {
 		
-		$class_name = 'RESTful_Response_' . RESTful_Application::getRequest()->getFormat();
+		# $class_name = 'RESTful_Response_' . RESTful_Application::getRequest()->getFormat(); 
 		
-		return $class_name::autorender( $object, $xml_options );
+		# return $class_name::autorender( $object, $xml_options );
+		
+		# just for php version online
+		return RESTful_Response_Json::autorender( $object, $xml_options );
 		
 	}
 	

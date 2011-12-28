@@ -14,7 +14,10 @@ class RESTful_Cache extends RESTful_Application {
 	public static function load( $cache_id ) {
 		
 		$registry = Zend_Registry::getInstance();
-  	if ( ! isset( $registry[$cache_id] ) ) $registry[$cache_id]['update_time'] = 0;
+  	if ( ! isset( $registry[$cache_id] ) ) {
+			$registry[$cache_id] = array();
+			$registry[$cache_id]['update_time'] = 0;
+		}
   	
   	return RESTful_Cache::getInstance()->load( $cache_id );
 	
