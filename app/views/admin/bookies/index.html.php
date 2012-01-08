@@ -20,3 +20,5 @@
 	</li>
 <? endforeach; ?>
 </ul>
+
+<div class="bookie_info grid_5" style="padding: 4px; margin-top: 10px;"><a href="../odds/best" target="_blank" style="color: #333; font-weight: bold;">Regenerate best odds data</a></div>

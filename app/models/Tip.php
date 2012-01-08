@@ -125,5 +125,10 @@ class Tip extends RESTful_Model {
 	protected function custom_filter( $value, Zend_DB_Select $select ) {
 		$select->where('selection LIKE ? OR ' . $this->_name . '.eventname LIKE ?', '%' . $value . '%');
 	}
+	
+	public function refreshTable( $table_name = 'tips_mobile' ) {
+		$this->db()->query( "TRUNCATE TABLE `tips_mobile`" );
+		$this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
+	}
 
 }

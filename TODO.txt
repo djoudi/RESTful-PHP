@@ -1,2 +1,0 @@
-+ add Format object with methods… XML(), JSON(), etc; extract this logic from request / response
-+ add the Format type to the url (needed for caching - now it's not considered for generating unique cache ids - so same url with different output)

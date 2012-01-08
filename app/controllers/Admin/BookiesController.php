@@ -9,7 +9,7 @@ class Admin_Bookies_RESTful_Controller extends Bookies_RESTful_Controller {
 	}
 	
 	public function update() {
-		$this->answer( $this->Bookie->update( array( 'live_mobile' => $_POST['live_mobile'] ), "bookie_id = " . $this->params['id'] ) ); # validate!
+		$this->answer( $this->Bookie->update( array( 'live_mobile' => ( $_POST['live_mobile'] == "true" ? 1 : 0 ) ), "bookie_id = " . $this->params['id'] ) ); # validate!
 	}
 	
 	public function sort() {

@@ -17,6 +17,8 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 		
 		$events = $this->Tip->eventsWithTips( $sport );
 		
+		if ( $events->count() > 0 ) $this->Tip->refreshTable();
+		
 		foreach ( $events as $event ) {
 			
 			$event = $event->toArray();
@@ -32,6 +34,8 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 			
 			$this->Tip->updateBestOdds( $event, $best_odds );
 		}
+		
+		echo 'OK';
 	}
 	
 }
