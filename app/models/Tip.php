@@ -116,10 +116,15 @@ class Tip extends RESTful_Model {
 	public function updateBestOdds( $event, $odds ) {
 		
 		$row = $this->fetchRow( $this->select()->where( 'id = ?', $event['id'] ) );
+		
+		if ( ! method_exists( $row, 'save' ) ) return false; 
+		
 		$row->odds = $odds['odds_decimal_value'];
 		$row->bookmaker = $odds['provider_name'];
 		
 		$row->save();
+		
+		return true; 
 	}
 	
 	protected function custom_filter( $value, Zend_DB_Select $select ) {
