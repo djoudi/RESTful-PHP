@@ -13,24 +13,21 @@ class ValueChecker {
 		RESTful_Loader::loadConfig( 'valuechecker' );
 	}
 	
-	public function getEventId( $event ) {
-		
-		$event_hash = hash( 'sha256', $event['eventname'] . $event['event_start'] );
-		
-		if ( ! isset( $this->events_list[ $event_hash ] ) ) {
+	public function getEvent( $event, &$vc_event = array() ) {
 			
-			# this should not be retested every time!!!
-			$event = $this->map_sports( $event ); if ( is_null( $event ) ) return null; 
-			
-			$event_id = $this->queryEvent( $event );
-			if ( isset( $event_id[0]['id'] ) ) $this->events_list[ $event_hash ] = $event_id;
-			else return null;
+		# this should not be retested every time!!!
+		$event = $this->map_sports( $event ); if ( is_null( $event ) ) return null; 
+		
+		$vc_event = $this->queryEvent( $event );
+		if ( isset( $vc_event[0]['id'] ) ) {
+			$vc_event = $vc_event[0];
 		}
-		
-		return $this->events_list[ $event_hash ][0]['id'];
+		else return null;
+			
+		return $vc_event['id'];
 	}
 	
-	public function getOutcomeId( $event, $vc_event_id ) {
+	public function getOutcomeId( &$event, $vc_event_id ) {
 	
 		$outcome_hash = hash( 'sha256', $event['eventname'] . $event['event_start'] . $event['marketid'] . $event['selection'] );
 		
@@ -70,26 +67,45 @@ class ValueChecker {
 		
 		$event_datetime = explode(' ', $event['event_start']);
 		
-		$select = $this->db->select()
-										->from( array( 'i' => 'instance_data_' . $event['sport'] . '_events'), 'id' )
-										->where( 'event_name = ?', $event['eventname'] )
-										->where( 'event_date = ?', $event_datetime[0] )
-										->where( 'event_time = ?', $event_datetime[1] );
+		if ( $event['sport'] == 'horseracing' ) $event['eventname'] = $this->processHrEventName( $event['eventname'] );
 		
-		# echo $select->__toString();
+		$select = $this->db->select()
+										->from( array( 'i' => 'instance_data_' . $event['sport'] . '_events'), '*' )
+										->where( ' ( event_name = ? OR TRIM( REPLACE( REPLACE( REPLACE( `event_name`, " - ", " " ), ")", "" ), "(", "" ) ) = ? ) ', trim( $event['eventname'] ) )
+										->where( 'event_date = ?', $event_datetime[0] );
+										#->where( 'event_time = ?', $event_datetime[1] );
+		
+		echo $select->__toString();
 		return $this->db->query($select)->fetchAll();
 	}
 	
-	private function queryOutcome( $event, $vc_event_id ) {
+	private function processHrEventName( $event_name ) {
+		preg_match( '/([0-9]*):([0-9]*) (.*)/', $event_name, $matches ); 
+		if ( isset( $matches[3] ) ) return $matches[3];
+		else return $event_name;
+	}
+	
+	private function queryOutcome( &$event, $vc_event_id ) {
+		
+		echo '<pre>' . print_r( $event, true ) . '</pre>';
+		
+		if ( $event['sport'] == 'basketball' || $event['sport'] == 'icehockey' ) $event['selection'] = $this->processOutcomeNamesWithHandicaps( $event['selection'] );
+		$event['selection'] = trim( str_replace( array( '  ', "'" ), array( ' ', '' ), $event['selection'] ) );
 		
 		$select = $this->db->select()
 										->from( array( 'i' => 'instance_data_' . $event['sport'] . '_outcomes'), 'id' )
 										->where( 'event_id = ?', $vc_event_id )
 										->where( 'market_id = ?', $event['marketid'] )
-										->where( 'outcome_name = ?', $event['selection'] );
+										->where( '( outcome_name = \'' . $event['selection'] . '\' OR outcome_name = \'' . ( isset( $event[ $event['selection'] ] ) ? $event[ $event['selection'] ] : '-NA-' ) . '\' )' );
 		
-		# echo $select->__toString();
+		echo $select->__toString() . '<br/>';
 		return $this->db->query($select)->fetchAll();
+	}
+	
+	private function processOutcomeNamesWithHandicaps( $outcome_name ) {
+		preg_match( '/([A-Za-z ]*)/', $outcome_name, $matches ); 
+		if ( isset( $matches[0] ) ) return trim( $matches[0] );
+		else return $outcome_name;
 	}
 	
 	private function queryBestOdds( $event, $outcome_id, $bookie_names ) {
@@ -120,6 +136,40 @@ class ValueChecker {
 		elseif ( array_key_exists( $event['subsport'], $vc_sports_mappings['non_mapped_sports'] ) ) $event['sport'] = $vc_sports_mappings['non_mapped_sports'][ $event['subsport'] ];
 
 		return $event; 
+	}
+	
+	public function parseHomeAwayTeams( &$event, $vc_event ) {
+		
+		if ( stripos( $vc_event['event_name'], ' v ' ) ) {
+			$teams = explode( ' v ', $vc_event['event_name'] );
+			$event['team_home_name'] = trim( $teams[0] );
+			$event['team_away_name'] = trim( $teams[1] );
+			
+			$event['team_home_id'] = $vc_event['team_home_id'];
+			$event['team_away_id'] = $vc_event['team_away_id'];
+			
+			$event[ trim( $teams[0] ) ] = 'Home Win';
+			$event[ trim( $teams[1] ) ] = 'Away Win';
+			
+			return true;
+		}
+		
+		if ( stripos( $vc_event['event_name'], ' @ ' ) ) {
+			$teams = explode( ' @ ', $vc_event['event_name'] );
+			$teams = array_reverse( $teams );
+			$event['team_home_name'] = trim( $teams[0] );
+			$event['team_away_name'] = trim( $teams[1] );
+			
+			$event['team_home_id'] = $vc_event['team_home_id'];
+			$event['team_away_id'] = $vc_event['team_away_id'];
+			
+			$event[ trim( $teams[0] ) ] = 'Home Win';
+			$event[ trim( $teams[1] ) ] = 'Away Win';
+			
+			return true;
+		}
+		
+		return false; 
 	}
 
 }

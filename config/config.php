@@ -25,3 +25,6 @@ set_include_path( BASE_PATH . 'lib/PEAR:' . ini_get( "include_path" ) );	# local
 #define( 'DEFAULT_MIME_TYPE', 'text/html' );
 define( 'DEFAULT_MIME_TYPE', 'application/json' );
 #define( 'DEFAULT_MIME_TYPE', 'application/xml' ); 
+
+# persons to be notified by mail of failures ( comma separated, for mail() )
+define( 'NOTIFY_THEM', 'adrian@invendium.co.uk' );

@@ -3,13 +3,13 @@ class Sport extends RESTful_Model {
 
 	protected $_name = 'sports';
 	protected $_primary = 'id';
-	protected $_dependentTables = array( 'tips_summary' );
+	protected $_dependentTables = array( 'tips_mobile' );
 	protected $accessible_attributes = array( 'id', 'subsport', 'sport', 'sportid', 'tipable', 'category' );
 	
 	protected $_referenceMap    = array(
       'Tip' => array(
 			'columns'           => array('subsport'),
-			'refTableClass'     => 'tips_summary',
+			'refTableClass'     => 'tips_mobile',
 			'refColumns'        => array('sport')
         ),
     );
@@ -36,7 +36,7 @@ class Sport extends RESTful_Model {
 	public function categories_with_tips() {
 		$select = $this->select()
 										->from( $this->_name, array( 'sport', 'rank', 'sportid' ) )
-										->join( 'tips_summary', 'tips_summary.sport = sports.subsport', array() )
+										->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
 										->where( 'tipable', true )
 										->group( 'sport' )
 										->order( 'sport', 'ASC' )->order( 'rank', 'ASC' )->where( 'event_start >= NOW()' );
@@ -48,7 +48,7 @@ class Sport extends RESTful_Model {
 		
 		$select = $this->select()
 										->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
-										->join( 'tips_summary', 'tips_summary.sport = sports.subsport', array() )
+										->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
 										->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
 										->group( 'sports.id' )
 										->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );

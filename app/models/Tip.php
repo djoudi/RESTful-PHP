@@ -29,10 +29,10 @@ class Tip extends RESTful_Model {
 	
 	public function hot( $params = array() ) {
 	
-		$accessible_attributes = array( 'odds' => '(odds + 1)', 
+		$accessible_attributes = array( 'odds' => '(odds)', 
 																		'sportname' => '(sports.sport)', 
 																		'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
-																		'odds_rounded' => '(ROUND( odds, 2 ) + 1)',
+																		'odds_rounded' => 'ROUND( odds, 2 )',
 																		'market_name' => '(markets.name)',
 																		'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
 																		'bookie_id' => '(bookies.id)' );
@@ -52,7 +52,8 @@ class Tip extends RESTful_Model {
 									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
 									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
 									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
-									->where( 'event_start >= NOW()' );
+									->where( 'event_start >= NOW()' )
+									->group( 'eventname' )->group( 'marketid' );
 		
 		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
 		if ( !empty( $params ) ) $select = $this->applyParams( $params, $select );
@@ -62,7 +63,7 @@ class Tip extends RESTful_Model {
 		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
 		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
 		
-		# echo $select;
+		#echo $select;
 		return $this->cacheFetchAll( $select );
 	}
 	
@@ -105,10 +106,11 @@ class Tip extends RESTful_Model {
 									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
 									->where( 'event_start >= NOW()' )
 									->where( $sport ? 'sport = "' . $sport . '"' : 1 )
-									->group( 'selection' )->group( 'eventname' )
-									->order( 'marketid', 'ASC')->order( 'eventname', 'ASC' );
+									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
+									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
 		
-		# echo $select->__toString();
+		echo 'getting events list from tips <br/>';
+		echo $select->__toString();
 		return $this->cacheFetchAll( $select );
 		
 	}
@@ -132,6 +134,8 @@ class Tip extends RESTful_Model {
 	}
 	
 	public function refreshTable( $table_name = 'tips_mobile' ) {
+		echo 'refreshing table <br/>';
+		
 		$this->db()->query( "TRUNCATE TABLE `tips_mobile`" );
 		$this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
 	}
