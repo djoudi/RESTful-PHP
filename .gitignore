@@ -9,3 +9,8 @@ doc/
 .project
 .DS_Store
 _*_/
+app/controllers/AuthenticationsController.php
+
+tips_api.tmproj
+
+config/database.php
