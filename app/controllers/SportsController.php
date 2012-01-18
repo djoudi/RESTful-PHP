@@ -23,6 +23,14 @@ class Sports_RESTful_Controller extends RESTful_Controller {
 	public function subsports_with_tips() {
 		$this->respond( $this->Sport->subsports_with_tips( str_replace('__nbsp__', ' ', $this->params['sport'] ) ) );
 	}
+
+	public function cat_subsports_with_tips() {
+        $sport_id = $this->Sport->get_sport_by_name($this->params['sport']);
+        $this->respond( $this->Sport->menu_cat_subsports_with_tips( 
+            str_replace('__nbsp__', ' ', $this->params['sport'] ),
+            $this->params['menu_cat'] ) );
+    }
+
 	
 	protected function respond( $response_val ) {
 		
