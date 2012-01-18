@@ -2,8 +2,8 @@
 class Tip extends RESTful_Model {
 	
 	protected $_name = 'tips_mobile';
+	protected $_primary = 'id'; # only for models using views
 	# protected $_view_name = 'current_tips'; # only for models using views
-	# protected $_primary = 'id'; # only for models using views
 	
 	protected $_referenceMap    = array(
       'Sport' => array(
@@ -30,21 +30,21 @@ class Tip extends RESTful_Model {
 	public function hot( $params = array() ) {
 	
 		$accessible_attributes = array( 'odds' => '(odds)', 
-																		'sportname' => '(sports.sport)', 
-																		'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
-																		'odds_rounded' => 'ROUND( odds, 2 )',
-																		'market_name' => '(markets.name)',
-																		'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
-																		'bookie_id' => '(bookies.id)' );
+										'sportname' => '(sports.sport)', 
+										'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
+										'odds_rounded' => 'ROUND( odds, 2 )',
+										'market_name' => '(markets.name)',
+										'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
+										'bookie_id' => '(bookies.id)' );
 		
 		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
 		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
 		
 		$select_confidence = $this->select()
-															->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
-															->where( 'event_start >= NOW()' )
-															->group( 'eventname' )->group( 'marketid' )
-															->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
+									->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+									->where( 'event_start >= NOW()' )
+									->group( 'eventname' )->group( 'marketid' )
+									->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
 		
 		$select = $this->select()
 									->from( $this->getTableName(), $this->selectable_attributes )
