@@ -42,7 +42,7 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 		
 		} elseif ( $this->hasFormat( 'json' ) ) {
 			
-			$this->autorender( $response_val->toArray(), $metaData );
+			$this->autorender( is_array( $response_val ) ? $response_val : $response_val->toArray(), $metaData );
 			
 		} else $this->render();
 	

@@ -70,7 +70,7 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 			echo '<hr/>';
 			
 			if ( ! $this->Tip->updateBestOdds( $event, $best_odds ) ) {
-				@ mail( NOTIFY_THEM, 'odds update has failed', print_r( $event->toArray(), true ) . ' --- ' . print_r( $best_odds, true ) );
+				mail( NOTIFY_THEM, 'odds update has failed', print_r( $event, true ) . ' --- ' . print_r( $best_odds, true ) );
 			}
 		}
 		

@@ -52,8 +52,7 @@ class Tip extends RESTful_Model {
 									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
 									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
 									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
-									->where( 'event_start >= NOW()' )
-									->group( 'eventname' )->group( 'marketid' );
+									->where( 'event_start >= NOW()' );
 		
 		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
 		if ( !empty( $params ) ) $select = $this->applyParams( $params, $select );
@@ -64,7 +63,19 @@ class Tip extends RESTful_Model {
 		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
 		
 		#echo $select;
-		return $this->cacheFetchAll( $select );
+		$result = $this->cacheFetchAll( $select );
+		$unique_tips = array();
+		$stored = array();
+		foreach ( $result->toArray() as $tip ) {
+			if ( isset( $stored[ md5( $tip['eventname'] . $tip['marketid'] ) ] ) ) continue;
+			else {
+				$unique_tips[] = $tip;
+				$stored[ md5( $tip['eventname'] . $tip['marketid'] ) ] = true;
+			}
+		}
+		
+		# return $this->cacheFetchAll( $select );
+		return $unique_tips;
 	}
 	
 	public function bySport( $params = array() ) {

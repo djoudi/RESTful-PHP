@@ -73,7 +73,7 @@ class ValueChecker {
 										->from( array( 'i' => 'instance_data_' . $event['sport'] . '_events'), '*' )
 										->where( ' ( event_name = ? OR TRIM( REPLACE( REPLACE( REPLACE( `event_name`, " - ", " " ), ")", "" ), "(", "" ) ) = ? ) ', trim( $event['eventname'] ) )
 										->where( 'event_date = ?', $event_datetime[0] );
-										#->where( 'event_time = ?', $event_datetime[1] );
+		if ( $event['sport'] == 'horseracing' ) $select->where( 'event_time = ?', $event_datetime[1] );
 		
 		echo $select->__toString();
 		return $this->db->query($select)->fetchAll();
