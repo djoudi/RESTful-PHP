@@ -23,7 +23,6 @@ RESTful_Route::map( 'sports/(?P<sport>\w+)/leagues_with_tips', 'sports#subsports
 RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/cat_leagues_with_tips', 'sports#cat_subsports_with_tips' );
 RESTful_Route::map( 'sports/(?P<sport>\w+)/menu_categories_with_tips', 'sports#menu_categories_with_tips' );
 
-
 RESTful_Route::mapResource( 'sports', array( ':only' => array( 'index', 'show' ) ) ); 
 
 RESTful_Route::mapResource( 'markets', array( ':only' => array( 'index', 'show' ) ) ); 

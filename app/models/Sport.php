@@ -57,38 +57,38 @@ class Sport extends RESTful_Model {
 	}
 
 	public function menu_cat_subsports_with_tips( $sport_id, $menu_cat ) {
-        
-        $select = $this->select()
-            ->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
-            ->join( 'tips_summary', 'tips_summary.sport = sports.subsport', array() )
-            ->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
-            ->where( 'sports.menu_cat = ?', $menu_cat )
-            ->group( 'sports.id' )
-            ->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
-
-        return $this->cacheFetchAll( $select );
-    }
+		
+		$select = $this->select()
+			->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
+			->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
+			->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
+			->where( 'sports.menu_cat = ?', $menu_cat )
+			->group( 'sports.id' )
+			->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
+		
+		return $this->cacheFetchAll( $select );
+	}
 
 	public function menu_categories_with_tips( $sport_id ) {
-        
-        $select = $this->select()
-                        ->distinct()
-                        ->from( $this->_name, 'menu_cat' )
-                                        ->order( 'sports.crank', 'ASC' )
-                                        ->where( 'sports.sportid = ?', $sport_id );
-                                        
-        return $this->cacheFetchAll( $select );
-    }
-    
-    public function get_sport_by_name( $sport_name ) {
-        
-        $select = $this->select()
-                        ->distinct()
-                        ->from( $this->_name, 'sportid' )
-                                        ->where( 'sport = ?', $sport_name );
-        $result = $this->cacheFetchAll( $select );
-        return $result[0]->sportid;
-    }
+		
+		$select = $this	->select()
+										->distinct()
+										->from( $this->_name, 'menu_cat' )
+										->order( 'sports.crank', 'ASC' )
+										->where( 'sports.sportid = ?', $sport_id );
+										                    
+		return $this->cacheFetchAll( $select );
+	}
+
+	public function get_sport_by_name( $sport_name ) {
+		        
+		$select = $this->select()
+										->distinct()
+										->from( $this->_name, 'sportid' )
+										->where( 'sport = ?', $sport_name );
+		$result = $this->cacheFetchAll( $select );
+		return $result[0]->sportid;
+	}
 	
 	protected function prepare( $params = array(), $selectable_attributes = array() ) {
 		

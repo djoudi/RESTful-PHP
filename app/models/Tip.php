@@ -1,9 +1,9 @@
 <?
 class Tip extends RESTful_Model {
 	
-	protected $_name = 'tips_mobile';
+	# protected $_name = 'odds';
 	protected $_primary = 'id'; # only for models using views
-	# protected $_view_name = 'current_tips'; # only for models using views
+	protected $_view_name = 'tips_mobile'; # only for models using views
 	
 	protected $_referenceMap    = array(
       'Sport' => array(
@@ -22,9 +22,9 @@ class Tip extends RESTful_Model {
 	
 	public function init() {
 		# only for models using views
-		# $this->_base_name = $this->_name;
-		# $this->_name = $this->_view_name;
-		# parent::_setupTableName();
+		$this->_base_name = $this->_name;
+		$this->_name = $this->_view_name;
+		parent::_setupTableName();
 	}
 	
 	public function hot( $params = array() ) {
@@ -129,13 +129,8 @@ class Tip extends RESTful_Model {
 	public function updateBestOdds( $event, $odds ) {
 		
 		$row = $this->fetchRow( $this->select()->where( 'id = ?', $event['id'] ) );
-		
-		if ( ! method_exists( $row, 'save' ) ) return false; 
-		
-		$row->odds = $odds['odds_decimal_value'];
-		$row->bookmaker = $odds['provider_name'];
-		
-		$row->save();
+		echo $sql = 'INSERT INTO `odds` (`tip_hash`, `odds`, `bookmaker`) VALUES ( sha1( concat( \'' . $event['eventname'] . '\', \'' . $event['event_start'] . '\', \'' . $event['marketid'] . '\', \'' . $event['selection'] . '\' ) ), "' . $odds['odds_decimal_value'] . '", "' . $odds['provider_name'] . '" ) ON DUPLICATE KEY UPDATE `odds`="' . $odds['odds_decimal_value'] . '", `bookmaker`="' . $odds['provider_name'] . '"';
+		$this->db()->query( $sql );
 		
 		return true; 
 	}
@@ -147,8 +142,8 @@ class Tip extends RESTful_Model {
 	public function refreshTable( $table_name = 'tips_mobile' ) {
 		echo 'refreshing table <br/>';
 		
-		$this->db()->query( "TRUNCATE TABLE `tips_mobile`" );
-		$this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
+		$this->db()->query( "TRUNCATE TABLE `odds`" );
+		# $this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
 	}
 
 }

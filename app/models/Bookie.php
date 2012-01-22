@@ -11,7 +11,7 @@ class Bookie extends RESTful_Model {
 		$select = $this->select()
 								->from( 'bookies', $this->accessible_attributes )
 								->joinLeft( 'bookies_mobile', 'bookies_mobile.bookie_id = bookies.providerid', array() )
-								->where( $this->mobile_scope )
+								->where( $this->mobile_scope )->where( 'live_mobile', 1 )
 								->order( 'order', 'ASC' )->order( 'sortorder', 'ASC' );
 										
 		# echo $select;

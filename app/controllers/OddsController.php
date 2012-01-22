@@ -8,9 +8,16 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 	}
 	
 	public function best( $sport = null ) {
+	
+		/* 
+		TODO: 
+		- tennis events with players names with hyphens (Jo-Wilfried Tsonga)
+		- football market not imported in VC: 10211, 10537, 50137, 10225, 10228
+		- specials - album of the year. Is used as event in OLBG, it's market in VC. VC event is grammy. different ids
+		*/
 		
 		$session = date( 'Y-m-d H:i:s', time() );
-		mail( NOTIFY_THEM, 'starting to process best odds for tips', 'yep' );
+		# mail( NOTIFY_THEM, 'starting to process best odds for tips', 'yep' );
 		
 		$event_mappings = array();
 		$outcome_mappings = array();
@@ -69,13 +76,17 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 			
 			echo '<hr/>';
 			
+			$this->Tip->updateBestOdds( $event, $best_odds );
+			
+			/*
 			if ( ! $this->Tip->updateBestOdds( $event, $best_odds ) ) {
 				mail( NOTIFY_THEM, 'odds update has failed', print_r( $event, true ) . ' --- ' . print_r( $best_odds, true ) );
 			}
+			*/
 		}
 		
 		echo 'OK'; 
-		mail( NOTIFY_THEM, 'ending process best odds for tips', date( 'Y-m-d H:i:s', time() ) );
+		# mail( NOTIFY_THEM, 'ending process best odds for tips', date( 'Y-m-d H:i:s', time() ) );
 	}
 	
 }

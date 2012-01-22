@@ -55,10 +55,14 @@ class ValueChecker {
 		
 		$odds = $this->queryBestOdds( $event, $outcome_id, $bookie_names );
 		
-		if ( isset( $odds[0] ) ) $odds = $odds[0];
-		else return null; 
-		
-		if ( $odds['provider_type'] == 2 ) $odds['odds_decimal_value'] = number_format( ( $odds['odds_decimal_value'] / 100 * ( 100 - $odds['default_commission'] ) ), 2 ); # exchange
+		if ( count( $odds ) > 1 ) {
+			for ( $i=0; $i<count($odds); $i++ ) {
+				if ( $odds[$i]['provider_type'] == 2 ) $odds[$i]['odds_decimal_value'] = number_format( ( $odds[$i]['odds_decimal_value'] / 100 * ( 100 - $odds[$i]['default_commission'] ) ), 2 ); # exchange
+			}
+			$odds = $odds[0]['odds_decimal_value'] >= $odds[1] ? $odds[0]['odds_decimal_value'] : $odds[1];
+		} elseif ( isset( $odds[0] ) ) {
+			$odds = $odds[0];
+		} else return null; 
 		
 		return $odds;
 	}
@@ -68,10 +72,11 @@ class ValueChecker {
 		$event_datetime = explode(' ', $event['event_start']);
 		
 		if ( $event['sport'] == 'horseracing' ) $event['eventname'] = $this->processHrEventName( $event['eventname'] );
+		if ( $event['sport'] == 'cricket' ) $event['eventname'] = $this->processCricketEventName( $event['eventname'] );
 		
 		$select = $this->db->select()
 										->from( array( 'i' => 'instance_data_' . $event['sport'] . '_events'), '*' )
-										->where( ' ( event_name = ? OR TRIM( REPLACE( REPLACE( REPLACE( `event_name`, " - ", " " ), ")", "" ), "(", "" ) ) = ? ) ', trim( $event['eventname'] ) )
+										->where( ' ( event_name = ? OR TRIM( REPLACE( REPLACE( REPLACE( REPLACE ( `event_name`, "\'", "" ), " - ", " " ), ")", "" ), "(", "" ) ) = ? ) ', trim( $event['eventname'] ) )
 										->where( 'event_date = ?', $event_datetime[0] );
 		if ( $event['sport'] == 'horseracing' ) $select->where( 'event_time = ?', $event_datetime[1] );
 		
@@ -85,11 +90,25 @@ class ValueChecker {
 		else return $event_name;
 	}
 	
+	private function processCricketEventName( $event_name ) {
+		preg_match( '/([A-Za-z ]*)/', $event_name, $matches ); 
+		if ( isset( $matches[0] ) ) {
+			if ( stripos( $matches[0], 'Final' ) !== false ) return trim( str_ireplace( 'Final', '', $matches[0] ) );
+			else return $matches[0];
+		}
+		else return $outcome_name;
+	}
+	
 	private function queryOutcome( &$event, $vc_event_id ) {
 		
 		echo '<pre>' . print_r( $event, true ) . '</pre>';
 		
-		if ( $event['sport'] == 'basketball' || $event['sport'] == 'icehockey' ) $event['selection'] = $this->processOutcomeNamesWithHandicaps( $event['selection'] );
+		if 		( $event['sport'] == 'specials' ) $event['marketid'] = $this->mapMarkets( $event['sport'], $event['marketid'] );
+		elseif 	( $event['sport'] == 'football' ) $event['marketid'] = $this->mapMarkets( $event['sport'], $event['marketid'] );
+		
+		if ( 	$event['sport'] == 'basketball' || $event['sport'] == 'icehockey' || 
+				$event['sport'] == 'rugbyunion' || $event['sport'] == 'americanfootball' || 
+				stripos( $event['selection'], 'Under' ) !== false || stripos( $event['selection'], 'Over' ) !== false ) $event['selection'] = $this->processOutcomeNamesWithHandicaps( $event['selection'], $event['marketid'] );
 		$event['selection'] = trim( str_replace( array( '  ', "'" ), array( ' ', '' ), $event['selection'] ) );
 		
 		$select = $this->db->select()
@@ -102,10 +121,28 @@ class ValueChecker {
 		return $this->db->query($select)->fetchAll();
 	}
 	
-	private function processOutcomeNamesWithHandicaps( $outcome_name ) {
-		preg_match( '/([A-Za-z ]*)/', $outcome_name, $matches ); 
-		if ( isset( $matches[0] ) ) return trim( $matches[0] );
+	private function processOutcomeNamesWithHandicaps( $outcome_name, $market_id ) {
+		if ( $market_id == 981 ) return str_ireplace( array('.00', '.50'), array('', '.5'), $outcome_name ); 
+	
+		preg_match( '/^([A-Za-z ]*)([0-9\.-]*)$/', $outcome_name, $matches ); 
+		if ( isset( $matches[1] ) ) return trim( $matches[1] );
 		else return $outcome_name;
+	}
+	
+	private function mapMarkets( $sport, $marketid ) {
+	
+		$mappings = array();
+		
+		$mappings['specials'] = array();
+		$mappings['specials']['1290001'] = 1064;
+		$mappings['specials']['1370010'] = 50010;
+		
+		$mappings['football'] = array();
+		$mappings['football']['10143'] = 981;
+		
+		if ( isset( $mappings[$sport][$marketid] ) ) return $mappings[$sport][$marketid];
+		else return $marketid;
+	
 	}
 	
 	private function queryBestOdds( $event, $outcome_id, $bookie_names ) {
@@ -117,9 +154,9 @@ class ValueChecker {
 										->where( 'provider_name IN (' . $bookie_names . ')' )
 										->where( 'outcome_id = ?', $outcome_id )
 										->order( 'odds_decimal_value DESC' )->order( 'FIELD( provider_name, ' . $bookie_names . ' ) ASC' )
-										->limit(1);
+										->limit(2);
 		
-		# echo $select->__toString();
+		echo $select->__toString() . '<br/>';
 		return $this->db->query($select)->fetchAll();
 	
 	}
