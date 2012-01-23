@@ -4,5 +4,3 @@ RESTful_Config::$vc_sports_mappings = array(
 	'auto_mapped_sports' => array( 'rugby', 'us sports' ), # use subsport instead of sport
 	'non_mapped_sports' => array( 'nhl' => 'icehockey', 'nfl' => 'americanfootball', 'horse racing' => 'horseracing', 'motor racing' => 'motorracing' ) # use indicated mapping
 );
-
-define( 'NOTIFY_THEM', 'adrian@invendium.co.uk' );

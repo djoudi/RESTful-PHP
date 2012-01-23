@@ -3,13 +3,13 @@ class Sport extends RESTful_Model {
 
 	protected $_name = 'sports';
 	protected $_primary = 'id';
-	protected $_dependentTables = array( 'tips_summary' );
+	protected $_dependentTables = array( 'tips_mobile' );
 	protected $accessible_attributes = array( 'id', 'subsport', 'sport', 'sportid', 'tipable', 'category', 'crank', 'menu_cat' );
 	
 	protected $_referenceMap    = array(
       'Tip' => array(
 			'columns'           => array('subsport'),
-			'refTableClass'     => 'tips_summary',
+			'refTableClass'     => 'tips_mobile',
 			'refColumns'        => array('sport')
         ),
     );
@@ -36,7 +36,7 @@ class Sport extends RESTful_Model {
 	public function categories_with_tips() {
 		$select = $this->select()
 										->from( $this->_name, array( 'sport', 'rank', 'sportid' ) )
-										->join( 'tips_summary', 'tips_summary.sport = sports.subsport', array() )
+										->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
 										->where( 'tipable', true )
 										->group( 'sport' )
 										->order( 'sport', 'ASC' )->order( 'rank', 'ASC' )->where( 'event_start >= NOW()' );
@@ -48,12 +48,46 @@ class Sport extends RESTful_Model {
 		
 		$select = $this->select()
 										->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
-										->join( 'tips_summary', 'tips_summary.sport = sports.subsport', array() )
+										->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
 										->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
 										->group( 'sports.id' )
 										->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
 										
 		return $this->cacheFetchAll( $select );
+	}
+
+	public function menu_cat_subsports_with_tips( $sport_id, $menu_cat ) {
+		
+		$select = $this->select()
+			->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
+			->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
+			->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
+			->where( 'sports.menu_cat = ?', $menu_cat )
+			->group( 'sports.id' )
+			->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
+		
+		return $this->cacheFetchAll( $select );
+	}
+
+	public function menu_categories_with_tips( $sport_id ) {
+		
+		$select = $this	->select()
+										->distinct()
+										->from( $this->_name, 'menu_cat' )
+										->order( 'sports.crank', 'ASC' )
+										->where( 'sports.sportid = ?', $sport_id );
+										                    
+		return $this->cacheFetchAll( $select );
+	}
+
+	public function get_sport_by_name( $sport_name ) {
+		        
+		$select = $this->select()
+										->distinct()
+										->from( $this->_name, 'sportid' )
+										->where( 'sport = ?', $sport_name );
+		$result = $this->cacheFetchAll( $select );
+		return $result[0]->sportid;
 	}
 	
 	public function menu_cat_subsports_with_tips( $sport_id, $menu_cat ) {

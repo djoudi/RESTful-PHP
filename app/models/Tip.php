@@ -1,9 +1,9 @@
 <?
 class Tip extends RESTful_Model {
 	
-	protected $_name = 'tips_mobile';
-	# protected $_view_name = 'current_tips'; # only for models using views
-	# protected $_primary = 'id'; # only for models using views
+	# protected $_name = 'odds';
+	protected $_primary = 'id'; # only for models using views
+	protected $_view_name = 'tips_mobile'; # only for models using views
 	
 	protected $_referenceMap    = array(
       'Sport' => array(
@@ -22,29 +22,29 @@ class Tip extends RESTful_Model {
 	
 	public function init() {
 		# only for models using views
-		# $this->_base_name = $this->_name;
-		# $this->_name = $this->_view_name;
-		# parent::_setupTableName();
+		$this->_base_name = $this->_name;
+		$this->_name = $this->_view_name;
+		parent::_setupTableName();
 	}
 	
 	public function hot( $params = array() ) {
 	
-		$accessible_attributes = array( 'odds' => '(odds + 1)', 
-																		'sportname' => '(sports.sport)', 
-																		'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
-																		'odds_rounded' => '(ROUND( odds, 2 ) + 1)',
-																		'market_name' => '(markets.name)',
-																		'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
-																		'bookie_id' => '(bookies.id)' );
+		$accessible_attributes = array( 'odds' => '(odds)', 
+										'sportname' => '(sports.sport)', 
+										'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
+										'odds_rounded' => 'ROUND( odds, 2 )',
+										'market_name' => '(markets.name)',
+										'confidence' => 'ROUND( win_tips * 100 / win_tips_count )',
+										'bookie_id' => '(bookies.id)' );
 		
 		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
 		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
 		
 		$select_confidence = $this->select()
-															->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
-															->where( 'event_start >= NOW()' )
-															->group( 'eventname' )->group( 'marketid' )
-															->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
+									->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+									->where( 'event_start >= NOW()' )
+									->group( 'eventname' )->group( 'marketid' )
+									->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
 		
 		$select = $this->select()
 									->from( $this->getTableName(), $this->selectable_attributes )
@@ -62,8 +62,20 @@ class Tip extends RESTful_Model {
 		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
 		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
 		
-		# echo $select;
-		return $this->cacheFetchAll( $select );
+		#echo $select;
+		$result = $this->cacheFetchAll( $select );
+		$unique_tips = array();
+		$stored = array();
+		foreach ( $result->toArray() as $tip ) {
+			if ( isset( $stored[ md5( $tip['eventname'] . $tip['marketid'] ) ] ) ) continue;
+			else {
+				$unique_tips[] = $tip;
+				$stored[ md5( $tip['eventname'] . $tip['marketid'] ) ] = true;
+			}
+		}
+		
+		# return $this->cacheFetchAll( $select );
+		return $unique_tips;
 	}
 	
 	public function bySport( $params = array() ) {
@@ -105,10 +117,11 @@ class Tip extends RESTful_Model {
 									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
 									->where( 'event_start >= NOW()' )
 									->where( $sport ? 'sport = "' . $sport . '"' : 1 )
-									->group( 'selection' )->group( 'eventname' )
-									->order( 'marketid', 'ASC')->order( 'eventname', 'ASC' );
+									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
+									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
 		
-		# echo $select->__toString();
+		echo 'getting events list from tips <br/>';
+		echo $select->__toString();
 		return $this->cacheFetchAll( $select );
 		
 	}
@@ -116,13 +129,8 @@ class Tip extends RESTful_Model {
 	public function updateBestOdds( $event, $odds ) {
 		
 		$row = $this->fetchRow( $this->select()->where( 'id = ?', $event['id'] ) );
-		
-		if ( ! method_exists( $row, 'save' ) ) return false; 
-		
-		$row->odds = $odds['odds_decimal_value'];
-		$row->bookmaker = $odds['provider_name'];
-		
-		$row->save();
+		echo $sql = 'INSERT INTO `odds` (`tip_hash`, `odds`, `bookmaker`) VALUES ( sha1( concat( \'' . $event['eventname'] . '\', \'' . $event['event_start'] . '\', \'' . $event['marketid'] . '\', \'' . $event['selection'] . '\' ) ), "' . $odds['odds_decimal_value'] . '", "' . $odds['provider_name'] . '" ) ON DUPLICATE KEY UPDATE `odds`="' . $odds['odds_decimal_value'] . '", `bookmaker`="' . $odds['provider_name'] . '"';
+		$this->db()->query( $sql );
 		
 		return true; 
 	}
@@ -132,8 +140,10 @@ class Tip extends RESTful_Model {
 	}
 	
 	public function refreshTable( $table_name = 'tips_mobile' ) {
-		$this->db()->query( "TRUNCATE TABLE `tips_mobile`" );
-		$this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
+		echo 'refreshing table <br/>';
+		
+		$this->db()->query( "TRUNCATE TABLE `odds`" );
+		# $this->db()->query( "INSERT INTO `tips_mobile` SELECT * FROM `betting`.`tips_mobile`" );
 	}
 
 }
