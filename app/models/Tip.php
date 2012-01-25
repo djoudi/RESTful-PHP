@@ -104,6 +104,29 @@ class Tip extends RESTful_Model {
 		return $this->cacheFetchAll( $select );
 		
 	}
+
+	public function menu_events( $sport = null ) {
+		
+		$accessible_attributes = array( 'eventname' );
+		
+		$this->selectable_attributes = $this->accessible_attributes = $accessible_attributes;
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		getenv("REMOTE_ADDR") == "127.0.0.1" ? $expired = 1 : $expired = 'event_start >= NOW()';
+
+		$select = $this->select()
+									->distinct()
+									->from( $this->_name, $this->selectable_attributes )
+									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->where( $expired )
+									->where( $sport ? $this->_name.'.sport = "' . $sport . '"' : 1 )
+									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
+									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
+		
+		return $this->cacheFetchAll( $select );
+		
+	}
+
 	
 	public function eventsWithTips( $sport = null ) {
 		

@@ -25,6 +25,10 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 		$this->respond( $this->tips );
 		
 	}
+
+	public function menu_events() {
+		$this->respond( $this->Tip->menu_events( str_replace('_', ' ', $this->params['menu_league'] ) ) );
+	}	
 	
 	public function jump() {
 		echo 'bzzz print';

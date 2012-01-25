@@ -12,7 +12,7 @@ RESTful_Application::$db_conf['default'] = Zend_Db::factory('Pdo_Mysql', array(
 RESTful_Application::$db_conf['default'] = Zend_Db::factory('Pdo_Mysql', array(
     'host'     				=> '127.0.0.1',
     'username' 				=> 'root',
-    'password' 				=> 'schw3pp3s',
+    'password' 				=> 'root',
     'dbname'   				=> 'betting_mobile',
     'driver_options' 		=> $pdoParams,
 ));

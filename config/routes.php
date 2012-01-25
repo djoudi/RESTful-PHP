@@ -21,8 +21,10 @@ RESTful_Route::map( 'sports/categories', 'sports#categories' );
 RESTful_Route::map( 'sports/categories_with_tips', 'sports#categories_with_tips' );
 RESTful_Route::map( 'sports/(?P<sport>\w+)/leagues_with_tips', 'sports#subsports_with_tips' );
 
-RESTful_Route::map( 'sports/(?P<sport>\w+)/menu_categories_with_tips', 'sports#menu_categories_with_tips' );
-RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/cat_leagues_with_tips', 'sports#cat_subsports_with_tips' );
+# subpages routes
+RESTful_Route::map( 'sports/(?P<sport>\w+)/menu_categories', 'sports#menu_categories' );
+RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/menu_leagues', 'sports#menu_leagues' );
+RESTful_Route::map( 'tips/(?P<menu_league>\w+)/menu_events', 'tips#menu_events' );
 
 RESTful_Route::mapResource( 'sports', array( ':only' => array( 'index', 'show' ) ) ); 
 
