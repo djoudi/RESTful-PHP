@@ -1,0 +1,1 @@
+<?= RESTful_Response_Xml::toString( $hot_tips->toArray(), $xml_options['root'], $xml_options['elem'], $xml_options['root_options'] ); ?>

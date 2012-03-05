@@ -18,7 +18,7 @@ class Tip extends RESTful_Model {
         ),
     );
 	
-	protected $accessible_attributes = array('tip_hash', 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid', '(sports.sport)', 'odds', 'bookmaker', 'event_start', 'win_tips', 'ew_tips', 'lay_tips', 'nap_tips', '(c.win_tips_count), (sports.sportid) AS sportid, (sports.id) AS subsport_id' );
+	protected $accessible_attributes = array( 'id', 'TRIM( selection ) AS selection', 'eventname', 'marketid', '(sports.sport)', 'odds', 'bookmaker', 'event_start', 'win_tips', 'ew_tips', 'lay_tips', 'nap_tips', '(c.win_tips_count), (sports.sportid) AS sportid, (sports.id) AS subsport_id' );
 	
 	public function init() {
 		# only for models using views
@@ -27,49 +27,8 @@ class Tip extends RESTful_Model {
 		parent::_setupTableName();
 	}
 	
-	public function comments($hash) {
-		$hash = $hash['hash'];
-		$accessible_attributes = array( 'tipster_comments' );
-
-		$select = $this->select()
-									->from( $this->getTableName(), $accessible_attributes )
-									->where( $this->getTableName().'.tip_hash = "'.$hash.'"' );
-		$result = $this->cacheFetchAll( $select );
-		$result = $result->toArray();
-		$results = explode("@@", $result[0]["tipster_comments"]); array_pop($results);
-		$comments = array();
-		foreach ($results as $res) {
-			$comment = explode("//", $res);
-			$i = count($comments);
-			$comments[$i]['user'] = $comment[0];
-			$comments[$i]['bet_type'] = $comment[1];
-			$comments[$i]['comment'] = $comment[2];
-		}
-		return $comments;
-	}
-
-	public function tipsters($hash) {
-		$hash = $hash['hash'];
-		$accessible_attributes = array( 'tipster_stats', 'pro_stats' );
-
-		$select = $this->select()
-									->from( $this->getTableName(), $accessible_attributes )
-									->where( $this->getTableName().'.tip_hash = "'.$hash.'"' );
-		$result = $this->cacheFetchAll( $select );
-		$result = $result->toArray();
-		$tipster_stats = explode("//", $result[0]["tipster_stats"]);\
-			array_pop($tipster_stats);
-		$pro_stats = explode("//", $result[0]["pro_stats"]);
-			array_pop($pro_stats);
-		foreach($tipster_stats as $ts)
-			$stats["tipsters"][] = explode(",", $ts);
-		foreach($pro_stats as $ps)
-			$stats["pro"][] = explode(",", $ps);
-		return $stats;
-	}
-
 	public function hot( $params = array() ) {
-
+	
 		$accessible_attributes = array( 'odds' => '(odds)', 
 										'sportname' => '(sports.sport)', 
 										'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 

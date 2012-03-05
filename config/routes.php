@@ -11,6 +11,8 @@ RESTful_Route::map( ':root', 'tips#hot' ); #default - site root
 
 RESTful_Route::map( 'tips/hot', 'tips#hot' );
 RESTful_Route::map( 'tips/hot/(?P<id>\d+)', 'tips#hot' );
+RESTful_Route::map( 'tips/(?P<hash>\w+)/comments', 'tips#CommentsByHash' );
+RESTful_Route::map( 'tips/(?P<hash>\w+)/tipsters', 'tips#TipstersByHash' );
 
 RESTful_Route::mapResource( 'tips', array( ':only' => array( 'index', 'show' ) ) ); 
 

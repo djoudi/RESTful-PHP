@@ -26,20 +26,6 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 		
 	}
 
-	public function CommentsByHash() {
-		
-		$this->tip = $this->Tip->comments( $this->params );
-		$this->respond( $this->tip );
-		
-	}
-
-	public function TipstersByHash() {
-		
-		$this->tip = $this->Tip->tipsters( $this->params );
-		$this->respond( $this->tip );
-		
-	}
-
 	public function menu_events() {
 		$this->respond( $this->Tip->menu_events( str_replace('_', ' ', $this->params['menu_league'] ) ) );
 	}	
