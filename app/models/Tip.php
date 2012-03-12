@@ -36,14 +36,19 @@ class Tip extends RESTful_Model {
 									->where( $this->getTableName().'.tip_hash = "'.$hash.'"' );
 		$result = $this->cacheFetchAll( $select );
 		$result = $result->toArray();
-		$results = explode("@@", $result[0]["tipster_comments"]); array_pop($results);
-		$comments = array();
-		foreach ($results as $res) {
-			$comment = explode("//", $res);
-			$i = count($comments);
-			$comments[$i]['user'] = $comment[0];
-			$comments[$i]['bet_type'] = $comment[1];
-			$comments[$i]['comment'] = $comment[2];
+		if(count($result) > 0)
+		{
+			$results = explode("@@", $result[0]["tipster_comments"]); array_pop($results);
+			$comments = array();
+			foreach ($results as $res) {
+				$comment = explode("//", $res);
+				$i = count($comments);
+				$comments[$i]['user'] = $comment[0];
+				$comments[$i]['bet_type'] = $comment[1];
+				$comments[$i]['comment'] = $comment[2];
+			}
+		} else {
+			$comments = array();
 		}
 		return $comments;
 	}
@@ -57,14 +62,28 @@ class Tip extends RESTful_Model {
 									->where( $this->getTableName().'.tip_hash = "'.$hash.'"' );
 		$result = $this->cacheFetchAll( $select );
 		$result = $result->toArray();
-		$tipster_stats = explode("//", $result[0]["tipster_stats"]);\
+
+		$tipster_stats = explode("//", $result[0]["tipster_stats"]);
 			array_pop($tipster_stats);
 		$pro_stats = explode("//", $result[0]["pro_stats"]);
 			array_pop($pro_stats);
+
+		$all_keys = array("bet_type","tips_count","average_".date("m")."_LSP", "average_6m_LSP", "average_12m_LSP");
+		$pro_keys = array("tipster","bet_type","tips_count","strike","lsp");
+
 		foreach($tipster_stats as $ts)
-			$stats["tipsters"][] = explode(",", $ts);
+			$stats["all"][] = array_combine($all_keys, explode(",", $ts));
 		foreach($pro_stats as $ps)
-			$stats["pro"][] = explode(",", $ps);
+		{	
+			$pro = explode(",", $ps);
+			if(count($pro) == 6) 
+				$pro[2] = $pro[2].$pro[3] and 
+				$pro[3] = $pro[4] and 
+				$pro[4] = $pro[5] and 
+				array_pop($pro);
+
+			$stats["pro"][] = array_combine($pro_keys, $pro);
+		}
 		return $stats;
 	}
 
@@ -146,7 +165,7 @@ class Tip extends RESTful_Model {
 		
 	}
 
-	public function menu_events( $sport = null ) {
+	public function menu_events( $sport, $category, $league ) {
 		
 		$accessible_attributes = array( 'eventname' );
 		
@@ -158,14 +177,14 @@ class Tip extends RESTful_Model {
 		$select = $this->select()
 									->distinct()
 									->from( $this->_name, $this->selectable_attributes )
-									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->join( 'sports', $this->_name . '.sport = sports.subsport', array() )
 									->where( $expired )
 									->where( $sport ? $this->_name.'.sport = "' . $sport . '"' : 1 )
+									->where( $category ? 'sports.menu_cat = "' . $category . '"' : 1 )
+									->where( $league ? 'sports.subsport = "' . $league . '"' : 1 )
 									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
 									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
-		
 		return $this->cacheFetchAll( $select );
-		
 	}
 
 	

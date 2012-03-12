@@ -29,29 +29,34 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 	public function CommentsByHash() {
 		
 		$this->tip = $this->Tip->comments( $this->params );
-		$this->respond( $this->tip );
+		$this->respond( $this->tip, 'comments' );
 		
 	}
 
 	public function TipstersByHash() {
 		
 		$this->tip = $this->Tip->tipsters( $this->params );
-		$this->respond( $this->tip );
+		$this->respond( $this->tip, 'tipsters' );
 		
 	}
 
 	public function menu_events() {
-		$this->respond( $this->Tip->menu_events( str_replace('_', ' ', $this->params['menu_league'] ) ) );
+
+		$sport = str_replace('_', ' ', $this->params['sport'] ) ;
+		$category = str_replace('_', ' ', $this->params['menu_cat'] ) ;
+		$league = str_replace('_', ' ', $this->params['menu_league'] ) ;
+		$this->respond( $this->Tip->menu_events( $sport, $category, $league) );
 	}	
 	
 	public function jump() {
 		echo 'bzzz print';
 	}
 	
-	protected function respond( $response_val ) {
+	protected function respond( $response_val, $data_name = 'tips' ) {
 		
 		
-		if ( $this->hasFormat( 'xml' ) || $this->hasFormat( 'json' ) ) $metaData = $this->metaData( $response_val );
+		if ( $this->hasFormat( 'xml' ) || $this->hasFormat( 'json' ) ) 
+			$metaData = $this->metaData( $response_val, $data_name );
 
 		if ( $this->hasFormat( 'xml' ) ) {
 			
@@ -66,7 +71,7 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 	
 	}
 	
-	protected function metaData( $response_val ) {
+	protected function metaData( $response_val, $data_name = 'tips') {
 		
 		return array( 
 			
@@ -74,7 +79,7 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 				'generated_in' 	=> RESTful_Profiler::timeElapsed( 'init' ) . ' sec', 
 				'tips_count' 		=> count( $response_val ),
 				'cached'				=> $this->Tip->wasLastQueryCached() !== false ? 'YES' : 'NO',
-				'type'					=> 'tips'
+				'type'					=> $data_name
 				
 			);
 		

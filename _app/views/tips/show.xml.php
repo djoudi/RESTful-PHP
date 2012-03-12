@@ -1,1 +1,0 @@
-<?= RESTful_Response_Xml::toString( $tip->toArray(), $xml_options['root'], $xml_options['elem'], $xml_options['root_options'] ); ?>

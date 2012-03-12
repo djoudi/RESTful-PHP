@@ -66,13 +66,12 @@ class Sport extends RESTful_Model {
     return $result[0]->sportid;
   }
 
-  public function menu_categories( $sport_id ) {
-    
+  public function menu_categories( $sport ) {
     $select = $this ->select()
                     ->distinct()
                     ->from( $this->_name, 'menu_cat' )
                     ->order( 'sports.crank', 'ASC' )
-                    ->where( 'sports.sportid = ?', $sport_id );
+                    ->where( 'sports.sport = ?', $sport );
     return $this->cacheFetchAll( $select );
   }
 

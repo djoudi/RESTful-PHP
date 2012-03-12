@@ -27,8 +27,8 @@ class Sports_RESTful_Controller extends RESTful_Controller {
 
   
   public function menu_categories() {
-    $sport_id = $this->Sport->get_sport_by_name(str_replace('_', ' ', $this->params['sport']));
-    $this->respond( $this->Sport->menu_categories( $sport_id ) );
+    $sport = str_replace('_', ' ', $this->params['sport']);
+    $this->respond( $this->Sport->menu_categories( $sport ) );
   }
 
   public function menu_leagues() {

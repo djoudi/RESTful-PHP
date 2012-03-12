@@ -1,1 +1,0 @@
-<pre><? print_r( $hot_tips->toArray() ) ?></pre>
