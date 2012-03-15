@@ -56,16 +56,6 @@ class Sport extends RESTful_Model {
     return $this->cacheFetchAll( $select );
   }
 
-  public function get_sport_by_name( $sport_name ) {
-            
-    $select = $this->select()
-                    ->distinct()
-                    ->from( $this->_name, 'sportid' )
-                    ->where( 'sport = ?', $sport_name );
-    $result = $this->cacheFetchAll( $select );
-    return $result[0]->sportid;
-  }
-
   public function menu_categories( $sport ) {
     $select = $this ->select()
                     ->distinct()
