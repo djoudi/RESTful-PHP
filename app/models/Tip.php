@@ -179,10 +179,13 @@ class Tip extends RESTful_Model {
 									->from( $this->_name, $this->selectable_attributes )
 									->join( 'sports', $this->_name . '.sport = sports.subsport', array() )
 									->where( $expired )
-									->where( $sport ? 'sports.sport = "' . $sport . '"' : 1 )
-									->where( $category ? 'sports.menu_cat = "' . $category . '"' : 1 )
-									->where( $league ? 'sports.subsport = "' . $league . '"' : 1 )
-									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
+									->where( $sport ? 'sports.sport = "' . $sport . '"' : 1 );
+		if($category != 'all')
+			$select = $select->where( $category ? 'sports.menu_cat = "' . $category . '"' : 1 );
+		if($league != 'all')
+			$select = $select->where( $league ? 'sports.subsport = "' . $league . '"' : 1 );
+
+		$select = $select->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
 									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
 		return $this->cacheFetchAll($select );
 	}
