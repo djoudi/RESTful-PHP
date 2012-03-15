@@ -60,6 +60,7 @@ class Sport extends RESTful_Model {
     $select = $this ->select()
                     ->distinct()
                     ->from( $this->_name, 'menu_cat' )
+                    ->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
                     ->order( 'sports.crank', 'ASC' )
                     ->where( 'sports.sport = ?', $sport );
     return $this->cacheFetchAll( $select );
@@ -69,6 +70,7 @@ class Sport extends RESTful_Model {
     $select = $this->select()
                     ->distinct()
                     ->from( $this->_name, array( 'subsport' ) )
+                    ->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
                     ->where( 'sports.menu_cat = ?', $menu_cat )
                     ->group( 'sports.id' )
                     ->order( 'subsport', 'DESC' );
