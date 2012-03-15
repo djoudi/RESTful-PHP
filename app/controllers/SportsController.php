@@ -41,12 +41,24 @@ class Sports_RESTful_Controller extends RESTful_Controller {
     
     if ( $this->hasFormat( 'xml' ) || $this->hasFormat( 'json' ) ) $metaData = $this->metaData( $response_val );
   
+    $response_array = $response_val->toArray();
+
+    // check for the 0 menu_call which is an equivalent for all
+    if(array_key_exists('0', $response_array))
+      if(array_key_exists('menu_cat', $response_array[0]))
+        if($response_array[0]['menu_cat'] == '0')
+          $response_array[0]['menu_cat'] = 'all';
+
+    // check for the 0 menu_call which is an equivalent for all
+    if(count($response_array) == 0)
+          $response_array[0]['subsport'] = 'all';
+
     if ( $this->hasFormat( 'xml' ) ) {
       
       $metaData = array_merge( $metaData, $this->params );
-      $this->autorender( $response_val->toArray(), array( 'root' => 'sports', 'elem' => 'sport', 'root_options' => ( (bool) $metaData ? $metaData : null ) ) );
+      $this->autorender( $response_array, array( 'root' => 'sports', 'elem' => 'sport', 'root_options' => ( (bool) $metaData ? $metaData : null ) ) );
     
-    } elseif ( $this->hasFormat( 'json' ) ) $this->autorender( $response_val->toArray(), $metaData );
+    } elseif ( $this->hasFormat( 'json' ) ) $this->autorender($response_array, $metaData );
     
     else $this->render();
   
