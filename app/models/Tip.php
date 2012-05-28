@@ -45,7 +45,7 @@ class Tip extends RESTful_Model {
 				$i = count($comments);
 				$comments[$i]['user'] = $comment[0];
 				$comments[$i]['bet_type'] = $comment[1];
-				$comments[$i]['comment'] = $comment[2];
+				$comments[$i]['comment'] = substr( $comment[2], 1, ( strlen( $comment[2] ) -2 ) );
 			}
 		} else {
 			$comments = array();
@@ -53,38 +53,60 @@ class Tip extends RESTful_Model {
 		return $comments;
 	}
 
-	public function tipsters($hash) {
+	public function tipsters( $hash ) {
 		$hash = $hash['hash'];
 		$accessible_attributes = array( 'tipster_stats', 'pro_stats' );
 
 		$select = $this->select()
 									->from( $this->getTableName(), $accessible_attributes )
-									->where( $this->getTableName().'.tip_hash = "'.$hash.'"' );
+									->where( $this->getTableName() . '.tip_hash = "' . $hash . '"' );
 		$result = $this->cacheFetchAll( $select );
 		$result = $result->toArray();
 
 		$tipster_stats = explode("//", $result[0]["tipster_stats"]);
-			array_pop($tipster_stats);
+		array_pop($tipster_stats);
+		
 		$pro_stats = explode("//", $result[0]["pro_stats"]);
-			array_pop($pro_stats);
+		array_pop($pro_stats);
 
-		$all_keys = array("bet_type","tips_count","average_".date("m")."_LSP", "average_6m_LSP", "average_12m_LSP");
-		$pro_keys = array("tipster","bet_type","tips_count","strike","lsp");
+		$all_keys = array("bet_type", "tips_count", "average_" . date("m") . "_LSP", "average_6m_LSP", "average_12m_LSP");
+		$pro_keys = array("tipster", "bet_type", "tips_count", "strike", "lsp", 'roi');
 
-		foreach($tipster_stats as $ts)
-			$stats["all"][] = array_combine($all_keys, explode(",", $ts));
+		foreach($tipster_stats as $ts) $stats["all"][] = array_combine($all_keys, explode(",", $ts));
+		
 		foreach($pro_stats as $ps)
 		{	
 			$pro = explode(",", $ps);
-			if(count($pro) == 6) 
-				$pro[2] = $pro[2].$pro[3] and 
+			
+			/*
+			if( count( $pro ) == 6 ) {
+				$pro[2] = $pro[2] . $pro[3] and 
 				$pro[3] = $pro[4] and 
 				$pro[4] = $pro[5] and 
 				array_pop($pro);
+				*/
 
 			$stats["pro"][] = array_combine($pro_keys, $pro);
 		}
 		return $stats;
+	}
+	
+	private function checkHrSubsportException( $params = array(), &$select ) {
+	  if ( in_array( "(sport)(eq)'Horse Racing'", $params ) || in_array( '(sport)(eq)"Horse Racing"', $params ) ) {
+
+	    $matches = preg_grep( '/\(sports\.id\)\(eq\)/', $params );
+	    $subsport_hash = '';
+	    if ( !empty( $matches ) ) {
+	      foreach ( $matches as $key => $val ) {
+	        $subsport_hash = trim( str_ireplace( '(sports.id)(eq)', '', $val ) );
+	        unset( $params[$key] );
+	      }
+	      
+	      $select->where( " MD5( SUBSTRING( `tips_mobile`.`eventname`, 6 ) ) = '$subsport_hash' " );
+	    }
+	  }
+	  
+	  return $params;
 	}
 
 	public function hot( $params = array() ) {
@@ -112,17 +134,18 @@ class Tip extends RESTful_Model {
 									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
 									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
 									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
-									->where( 'event_start >= NOW()' );
+									->where( 'event_start >= NOW()' )
+									->where( 'win_tips >= 10' ); // don't show if less then 10 tips
+									
+		if ( isset( $params['having'] ) ) $params['having'] = $this->checkHrSubsportException( $params['having'], &$select );
 		
 		if ( !empty( $params ) ) $params = $this->accessibleParams( $params, $this->accessible_attributes, $this->accessible_filters );
 		if ( !empty( $params ) ) $select = $this->applyParams( $params, $select );
 		
 		# add default query parts if not manually set
 		if ( ! (bool) $select->getPart( Zend_Db_Select::ORDER ) ) 	$select->order( array( 'win_tips DESC', 'odds DESC' ) );
-		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
-		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
+		else $select->order( array( 'win_tips DESC' ) ); # last order by win_tips anyway
 		
-		#echo $select;
 		$result = $this->cacheFetchAll( $select );
 		$unique_tips = array();
 		$stored = array();
@@ -157,17 +180,75 @@ class Tip extends RESTful_Model {
 		
 		# add default query parts if not manually set
 		if ( ! (bool) $select->getPart( Zend_Db_Select::ORDER ) ) 	$select->order( array( 'win_tips DESC', 'odds DESC' ) );
-		# if ( ! (bool) $select->getPart( Zend_Db_Select::HAVING ) ) 	$select->having( '`tips_per_event` >= 10' );
-		# if ( ! (bool) $select->getPart( Zend_Db_Select::LIMIT_COUNT ) || ! (bool) $select->getPart( Zend_Db_Select::LIMIT_OFFSET ) ) $select->limitPage(0, 50);
 		
 		# echo $select->__toString();
 		return $this->cacheFetchAll( $select );
 		
 	}
-
-	public function menu_events( $sport, $category, $league ) {
+	
+	public function byGeo( $params = array() ) {
+	  
+	  $stub_tips = $this->hot();
+	  
+	  return array_pop( $stub_tips );
+	  
+	}
+	
+	public function bygeo_event( $event_name, $event_date ) {
+	
+	 if ( ! $event_date && ( preg_match( '/([0-9]*):([0-9]*) (.*)/', $event_name, $matches ) ) ) {
+  		if ( count( $matches ) == 4 ) return $this->menu_events( 'horse racing', 'all', $matches[3] );
+		}
+	  
+		$accessible_attributes = array( 'odds' => '(odds)', 
+										'sportname'     => '(sports.sport)', 
+										'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
+										'odds_rounded'  => 'ROUND( odds, 2 )',
+										'market_name'   => '(markets.name)',
+										'confidence'    => 'ROUND( win_tips * 100 / win_tips_count )',
+										'bookie_id'     => '(bookies.id)', 
+										'has_comments'  => 'IF(tipster_comments != "", "YES", "NO")', 
+										'has_pro_tips'  => 'IF(pro_stats != "", "YES", "NO")', 
+										);
 		
-		$accessible_attributes = array( 'eventname' );
+		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		$select_confidence = $this->select()
+									->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+									->where( 'event_start >= NOW()' )
+									->group( 'eventname' )->group( 'marketid' )
+									->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
+		
+		$select = $this->select()
+									->from( $this->getTableName(), $this->selectable_attributes )
+									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
+									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
+									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
+									->where( 'event_start >= NOW()' )
+									->where( $this->getTableName() . '.eventname = "'. $event_name . '"' )
+                  ->where( $this->getTableName() . '.event_start = "'. $event_date . '"' )
+									->order( $this->_name .'.marketid' );
+
+		return $this->cacheFetchAll( $select );
+	}
+
+	public function subsports_with_tips( $sport ) {
+		$select = $this->select()->distinct()
+                    ->from( $this->_name, array("substring(`eventname`, 6) as subsport, sports.subrank as subrank, MD5(substring(`eventname`, 6)) as id") )
+                    ->join( 'sports', 'tips_mobile.sport = sports.subsport', array() )
+                    ->where( 'tips_mobile.sport = ?', $sport )
+                    ->where( 'eventname REGEXP "^[0-9]" ')
+                    ->order( 'eventname', 'ASC' );
+                    //->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
+              //echo $select;exit;
+    return $this->cacheFetchAll( $select );
+	}
+
+	public function menu_events($sport, $category, $league)
+	{
+		$accessible_attributes = array( 'eventname');
 		
 		$this->selectable_attributes = $this->accessible_attributes = $accessible_attributes;
 		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
@@ -180,16 +261,56 @@ class Tip extends RESTful_Model {
 									->join( 'sports', $this->_name . '.sport = sports.subsport', array() )
 									->where( $expired )
 									->where( $sport ? 'sports.sport = "' . $sport . '"' : 1 );
-		if($category != 'all')
-			$select = $select->where( $category ? 'sports.menu_cat = "' . $category . '"' : 1 );
-		if($league != 'all')
-			$select = $select->where( $league ? 'sports.subsport = "' . $league . '"' : 1 );
+		
+		if ( $category != 'all' ) $select = $select->where( $category ? 'sports.menu_cat = "' . $category . '"' : 1 );
+		if ( $league != 'all' ) {
+		  $sport = strtolower( $sport );
+		  
+		  if ( $sport != 'horse_racing' && $sport != 'horse racing' && $sport != 'horseracing' ) $select = $select->where( $league ? 'sports.subsport = "' . $league . '"' : 1 );
+		  else $select = $select->where( $league ? 'tips_mobile.eventname like "%' . $league . '"' : 1 );
+		}
 
-		$select = $select->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
-									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
+		$select = $select->group( 'eventname' );
+		//echo $select->__toString();
+		
 		return $this->cacheFetchAll($select );
 	}
 
+	public function menu_tips($sport, $category, $league, $event)
+	{
+		$accessible_attributes = array( 'odds' => '(odds)', 
+										'sportname'     => '(sports.sport)', 
+										'event_start_unix_timestamp' => 'UNIX_TIMESTAMP(event_start)', 
+										'odds_rounded'  => 'ROUND( odds, 2 )',
+										'market_name'   => '(markets.name)',
+										'confidence'    => 'ROUND( win_tips * 100 / win_tips_count )',
+										'bookie_id'     => '(bookies.id)', 
+										'has_comments'  => 'IF(tipster_comments != "", "YES", "NO")', 
+										'has_pro_tips'  => 'IF(pro_stats != "", "YES", "NO")', 
+										);
+		
+		$this->selectable_attributes = array_merge( $this->accessible_attributes, $accessible_attributes );
+		$this->accessible_attributes = array_merge( array_keys( $accessible_attributes ), $this->accessible_attributes );
+		
+		$select_confidence = $this->select()
+									->from( $this->_name, array( 'eventname', 'marketid', new Zend_Db_Expr( 'SUM(win_tips) AS win_tips_count' ) ) )
+									->where( 'event_start >= NOW()' )
+									->group( 'eventname' )->group( 'marketid' )
+									->order( 'eventname', 'ASC' )->order( 'marketid', 'ASC' );
+		
+		$select = $this->select()
+									->from( $this->getTableName(), $this->selectable_attributes )
+									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
+									->join( 'markets', 	$this->_name . '.marketid = markets.marketid', array() )
+									->join( 'bookies', 	$this->_name . '.bookmaker = bookies.bookmaker', array() )
+									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
+									->where( 'event_start >= NOW()' )
+									->where( $this->getTableName().'.eventname = "'.$event.'"' )
+									->order( $this->_name .'.marketid' );
+		
+		// echo $select; die;
+		return $this->cacheFetchAll( $select );
+	}
 	
 	public function eventsWithTips( $sport = null ) {
 		
@@ -202,12 +323,12 @@ class Tip extends RESTful_Model {
 									->from( $this->_name, $this->selectable_attributes )
 									->join( 'sports', 	$this->_name . '.sport = sports.subsport', array() )
 									->where( 'event_start >= NOW()' )
-									->where( $sport ? 'sport = "' . $sport . '"' : 1 )
+									->where( (bool)$sport ? 'sports.sport = "' . $sport . '"' : 1 )
 									->group( 'eventname' )->group( 'marketid' )->group( 'selection' )
 									->order( 'win_tips DESC' )->order( 'marketid ASC' )->order( 'eventname ASC' ); 
 		
-		echo 'getting events list from tips <br/>';
-		echo $select->__toString();
+		#echo 'getting events list from tips <br/>';
+		#echo $select->__toString();
 		return $this->cacheFetchAll( $select );
 		
 	}

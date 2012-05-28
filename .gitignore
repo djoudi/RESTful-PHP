@@ -14,3 +14,4 @@ app/controllers/AuthenticationsController.php
 tips_api.tmproj
 
 config/database.php
+.idea/*

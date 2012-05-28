@@ -7,7 +7,7 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 		
 	}
 	
-	public function best( $sport = null ) {
+	public function best( $params = null, $sport = null ) {
 	
 		/* 
 		TODO: 
@@ -24,6 +24,9 @@ class Odds_RESTful_Controller extends RESTful_Controller {
 		
 		$mobile_bookies = $this->Bookie->mobileBookies()->toArray();
 		$mobile_bookies_names = array_map( 'map_bookies_names', $mobile_bookies );
+		
+		//var_dump($sport);
+		if ( is_array( $sport ) && empty( $sport ) ) $sport = null;
 		
 		$events = $this->Tip->eventsWithTips( $sport );
 		

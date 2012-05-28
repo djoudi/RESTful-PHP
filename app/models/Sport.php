@@ -44,15 +44,14 @@ class Sport extends RESTful_Model {
     return $this->cacheFetchAll( $select );
   }
   
-  public function subsports_with_tips( $sport_id ) {
-    
+  public function subsports_with_tips( $sport ) {
+
     $select = $this->select()
                     ->from( $this->_name, array( 'subsport', 'subrank', 'id' ) )
                     ->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
-                    ->where( 'tipable', true )->where( 'sports.sport = ?', $sport_id )
+                    ->where( 'tipable', true )->where( 'sports.sport = ?', $sport )
                     ->group( 'sports.id' )
                     ->order( 'subsport', 'ASC' )->order( 'subrank', 'ASC' )->where( 'event_start >= NOW()' );
-                    
     return $this->cacheFetchAll( $select );
   }
 
@@ -67,14 +66,57 @@ class Sport extends RESTful_Model {
   }
 
   public function menu_leagues( $sport, $menu_cat ) {
-    $select = $this->select()
+
+    if ( $sport == 'horseracing' || $sport == 'horse racing' || $sport == 'horse_racing' ) {
+      return $this->menu_leagues_hr_exception( $sport, $menu_cat );
+    } else {
+      $select = $this->select()
+                      ->distinct()
+                      ->from( $this->_name, array( 'subsport' ) )
+                      ->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
+                      ->where( 'sports.menu_cat = ?', $menu_cat )
+                      ->group( 'sports.id' )
+                      ->order( 'subsport', 'DESC' );
+                      
+      return $this->cacheFetchAll( $select );
+    }
+
+  }
+  
+  private function menu_leagues_hr_exception( $sport, $menu_cat ) {
+  
+    $select = $this->select()->setIntegrityCheck(false)
                     ->distinct()
-                    ->from( $this->_name, array( 'subsport' ) )
-                    ->join( 'tips_mobile', 'tips_mobile.sport = sports.subsport', array() )
-                    ->where( 'sports.menu_cat = ?', $menu_cat )
-                    ->group( 'sports.id' )
-                    ->order( 'subsport', 'DESC' );
-    return $this->cacheFetchAll( $select );
+                    ->from( 'tips_mobile', array( 'eventname' ) )
+                    ->group( 'eventname' )
+                    ->where( 'sport = ?', array( 'Horse Racing' ) )
+                    ->order( 'eventname', 'ASC' );
+                    
+    if ( $menu_cat != 'all' ) {
+      $select->where( 'eventname like ?', array( '%' . $menu_cat . '%' ) );
+    }
+                    
+    $courses = $this->cacheFetchAll( $select )->toArray(); 
+    $course_names = array();
+    foreach ( $courses as $course ) {
+      if ( preg_match( '/([0-9]*):([0-9]*) (.*)/', $course['eventname'], $matches ) ) {
+        if ( count( $matches ) == 4 ) {
+          $course_names[] = $matches[3];
+        }
+      }
+    }
+    
+    if ( !empty( $course_names ) ) {
+      $course_names = array_values( array_unique( $course_names ) );
+      sort( $course_names );
+      
+      $courses = array();
+      foreach ( $course_names as $course_name ) {
+        $courses[] = array( 'subsport' => $course_name );
+      }
+
+      return $courses;
+    } 
   }
 
   protected function prepare( $params = array(), $selectable_attributes = array() ) {

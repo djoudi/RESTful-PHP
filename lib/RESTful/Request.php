@@ -39,17 +39,17 @@ class RESTful_Request extends RESTful_Application {
 	public function getUrl() {
 		return $this->url;
 	}
-	
+
+  public function getController() {
+    return $this->controller;
+  }
+
+  public function getAction() {
+    return $this->action;
+  }
+
 	protected function setUrl( Net_URL2 $url ) {
 		$this->url = $url;
-	}
-	
-	protected function getController() {
-		return $this->controller;
-	}
-	
-	protected function getAction() {
-		return $this->action;
 	}
 	
 	public function getContentType() {

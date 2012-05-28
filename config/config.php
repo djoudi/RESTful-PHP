@@ -22,8 +22,8 @@ set_include_path( BASE_PATH . 'lib/PEAR:' . ini_get( "include_path" ) );	# local
 
 
 # some defaults
-#define( 'DEFAULT_MIME_TYPE', 'text/html' );
-define( 'DEFAULT_MIME_TYPE', 'application/json' );
+if ( stripos( $_SERVER['REQUEST_URI'], '/admin' ) !== false ) define( 'DEFAULT_MIME_TYPE', 'text/html' );
+else define( 'DEFAULT_MIME_TYPE', 'application/json' );
 #define( 'DEFAULT_MIME_TYPE', 'application/xml' ); 
 
 # persons to be notified by mail of failures ( comma separated, for mail() )

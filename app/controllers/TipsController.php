@@ -25,6 +25,23 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 		$this->respond( $this->tips );
 		
 	}
+	
+	public function byGeo() {
+	  
+	  $this->tips = $this->Tip->byGeo( $this->params );
+	  if ( isset( $this->params['no_response'] ) || ! isset( $this->params['lat'] ) || ! isset( $this->params['long'] ) ) $this->tips = array();
+	  
+		$this->respond( $this->tips );
+	  
+	}
+	
+	public function bygeo_event() {
+		
+		$response_data = $this->Tip->bygeo_event();
+		if ( isset( $this->params['no_response'] ) || ! isset( $this->params['lat'] ) || ! isset( $this->params['long'] ) ) $response_data = array(); # stub for testing
+		
+		$this->respond( $response_data );
+	}
 
 	public function CommentsByHash() {
 		
@@ -41,19 +58,21 @@ class Tips_RESTful_Controller extends RESTful_Controller {
 	}
 
 	public function menu_events() {
-
 		$sport = str_replace('_', ' ', $this->params['sport'] ) ;
 		$category = str_replace('_', ' ', $this->params['menu_cat'] ) ;
 		$league = str_replace('_', ' ', $this->params['menu_league'] ) ;
 		$this->respond( $this->Tip->menu_events( $sport, $category, $league) );
-	}	
-	
-	public function jump() {
-		echo 'bzzz print';
+	}
+
+	public function menu_tips() {
+		$sport = str_replace('_', ' ', $this->params['sport'] ) ;
+		$category = str_replace('_', ' ', $this->params['menu_cat'] ) ;
+		$league = str_replace('_', ' ', $this->params['menu_league'] ) ;
+		$event = str_replace('_', ' ', $this->params['menu_event'] );
+		$this->respond( $this->Tip->menu_tips( $sport, $category, $league, $event) );
 	}
 	
 	protected function respond( $response_val, $data_name = 'tips' ) {
-		
 		
 		if ( $this->hasFormat( 'xml' ) || $this->hasFormat( 'json' ) ) 
 			$metaData = $this->metaData( $response_val, $data_name );

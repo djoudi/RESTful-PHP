@@ -11,7 +11,14 @@ RESTful_Route::map( ':root', 'tips#hot' ); #default - site root
 
 RESTful_Route::map( 'tips/hot', 'tips#hot' );
 RESTful_Route::map( 'tips/hot/(?P<id>\d+)', 'tips#hot' );
+
+RESTful_Route::map( 'tips/bygeo', 'events#bygeo' );
+RESTful_Route::map( 'tips/bygeo_event', 'events#bygeo' );
+RESTful_Route::map( 'events/bygeo', 'events#bygeo' );
+
 RESTful_Route::map( 'tips/(?P<hash>\w+)/comments', 'tips#CommentsByHash' );
+
+RESTful_Route::map( 'tips/(?P<hash>\w+)', 'tips#TipstersByHash' );
 RESTful_Route::map( 'tips/(?P<hash>\w+)/tipsters', 'tips#TipstersByHash' );
 
 RESTful_Route::mapResource( 'tips', array( ':only' => array( 'index', 'show' ) ) ); 
@@ -24,17 +31,29 @@ RESTful_Route::map( 'sports/categories_with_tips', 'sports#categories_with_tips'
 RESTful_Route::map( 'sports/(?P<sport>\w+)/leagues_with_tips', 'sports#subsports_with_tips' );
 
 # subpages routes
+RESTful_Route::map( 'sports/(?P<sport>\w+)', 'sports#menu_categories' );
 RESTful_Route::map( 'sports/(?P<sport>\w+)/menu_categories', 'sports#menu_categories' );
+
+RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)', 'sports#menu_leagues' );
 RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/menu_leagues', 'sports#menu_leagues' );
+
+RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/(?P<menu_league>\w+)', 'tips#menu_events' );
 RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/(?P<menu_league>\w+)/menu_events', 'tips#menu_events' );
+
+RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/(?P<menu_league>\w+)/(?P<menu_event>(.*?))', 'tips#menu_tips' );
+RESTful_Route::map( 'sports/(?P<sport>\w+)/(?P<menu_cat>\w+)/(?P<menu_league>\w+)/(?P<menu_event>(.*?))/menu_tips', 'tips#menu_tips' );
 
 RESTful_Route::mapResource( 'sports', array( ':only' => array( 'index', 'show' ) ) ); 
 
 RESTful_Route::mapResource( 'markets', array( ':only' => array( 'index', 'show' ) ) ); 
 RESTful_Route::mapResource( 'events', array( ':only' => array( 'index', 'show' ) ) ); 
 
+RESTful_Route::map( 'admin', 'admin/bookies#index' );
+
 RESTful_Route::mapResource( 'admin/bookies' ); 
 RESTful_Route::map( 'admin/bookies/sort', 'admin/bookies#sort' );
+
+RESTful_Route::mapResource( 'admin/events' );
 
 RESTful_Route::mapResource( 'authentications' );
 RESTful_Route::map( 'authentications/log_off', 'authentications#destroy' );

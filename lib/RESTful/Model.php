@@ -137,6 +137,12 @@ abstract class RESTful_Model extends Zend_Db_Table_Abstract {
 		}
 		
 		# add 'By' - findBy FetchAllBy ...
+
+    if ( stripos( $method_name, 'findAllBy' ) === 0 ) {
+
+
+
+    }
 		
 	}
 

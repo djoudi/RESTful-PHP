@@ -24,7 +24,7 @@ class RESTful_Controller_View extends RESTful_Controller {
 	}
 	
 	protected function render( $format, $return ) {
-		
+
 		extract( RESTful_Application::$instance_variables );
 		
 		ob_start();

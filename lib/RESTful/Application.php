@@ -23,6 +23,7 @@ abstract class RESTful_Application {
 		if ( DEBUG ) RESTful_Response::sendAccessControlHeaders(); # allow Ajax cross-domain requests
 		
 		RESTful_Application::$_url = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
+		if ( substr( $_SERVER['REQUEST_URI'], -1 ) == '/' ) $_SERVER['REQUEST_URI'] = substr( $_SERVER['REQUEST_URI'], 0, ( strlen( $_SERVER['REQUEST_URI'] ) -1 ) );
 		if ($_SERVER["SERVER_PORT"] != "80") RESTful_Application::$_url .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . $_SERVER["REQUEST_URI"];
 		else RESTful_Application::$_url .= $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"];
 		
@@ -40,8 +41,6 @@ abstract class RESTful_Application {
 		$request = new RESTful_Request( new Net_URL2( $url ) );
 		RESTful_Application::setRequest( $request );
 		
-		# if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) die( '<pre>' . print_r( RESTful_Application::getRequest(), true ) . '</pre>' );
-		
 		RESTful_Loader::loadRoutes();
 		RESTful_Loader::loadHelpers();
 		
@@ -49,7 +48,8 @@ abstract class RESTful_Application {
 			
 			$controller = RESTful_Controller::factory( $request->getController(), new RESTful_Controller_View(), new RESTful_Controller_Layout() ); 
 			$action = $request->getAction();
-			
+
+      RESTful_Application::$instance_variables['params'] = array_merge( RESTful_Route::$regex_maps, $_REQUEST );
 			RESTful_Application::execute( $controller, $action, $request );
 		
 			# all done - close
@@ -66,7 +66,7 @@ abstract class RESTful_Application {
 			RESTful_Response::setTitle( ucfirst( trim( str_replace( '/', ' ', $request->getUrl()->getPath() ) ) ) );
 			
 			$controller->view()->setView( $action ); # set corresponding view file
-			$controller->$action(); # execute controller action
+			$controller->$action( RESTful_Application::$instance_variables['params'] ); # execute controller action
 				
 			RESTful_Response::renderLayout( $controller->layout()->getLayout() );
 								
