@@ -3,7 +3,7 @@ class Admin_Events_RESTful_Controller extends Events_RESTful_Controller {
 
   public function index( $params = array() ) {
 
-    if ( $params['search_event'] ) {
+    if ( isset( $params['search_event'] ) && $params['search_event'] ) {
       $this->events = $this->Event->findAllLikeEventName( $params['search_event'] )->toArray();
     }
 

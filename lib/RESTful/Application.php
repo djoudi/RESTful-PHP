@@ -19,6 +19,7 @@ abstract class RESTful_Application {
 		RESTful_Profiler::init();
 		RESTful_Exception::init();
 		RESTful_Registry::init();
+		RESTful_Log::init();
 		
 		if ( DEBUG ) RESTful_Response::sendAccessControlHeaders(); # allow Ajax cross-domain requests
 		
@@ -37,6 +38,8 @@ abstract class RESTful_Application {
 			if ($_SERVER["SERVER_PORT"] != "80") $url = $url_ . $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . '/' . $url;
 			else $url = $url_ . $_SERVER["SERVER_NAME"] . '/' . $url;
 		}
+		
+		RESTful_Log::$app_log->info( $url );
 		
 		$request = new RESTful_Request( new Net_URL2( $url ) );
 		RESTful_Application::setRequest( $request );

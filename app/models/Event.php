@@ -41,8 +41,9 @@ class Event extends RESTful_Model {
   public function allByGeo( $lat, $long ) {
 
     // haversine formula - 6371 = KM // 3959 = miles
-    $sql = "SELECT id, eventname, eventdate, ( 6371 * acos( cos( radians( $lat ) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians( $long ) ) + sin( radians( $lat ) ) * sin( radians( latitude ) ) ) ) AS distance FROM events_geodata HAVING distance < 25 ORDER BY distance LIMIT 1";
-    #echo $sql;
+    //$sql = "SELECT id, eventname, eventdate, ( 6371 * acos( cos( radians( $lat ) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians( $long ) ) + sin( radians( $lat ) ) * sin( radians( latitude ) ) ) ) AS distance FROM events_geodata HAVING distance < 5 ORDER BY distance LIMIT 1";
+    $sql = "SELECT id, eventname, eventdate, 1 AS distance FROM events_geodata WHERE ( id = 6 OR id = 7 ) ORDER BY RAND() LIMIT 1";
+    //echo $sql;
     $stmt = $this->db()->query( $sql );
 
     return $stmt->fetchAll();

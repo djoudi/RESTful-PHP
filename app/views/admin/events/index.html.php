@@ -1,6 +1,6 @@
 <form action="" method="post">
   <label for="search_event">Search events</label>
-  <input name="search_event" id="search_event" value="<?=$params['search_event']?>" />
+  <input name="search_event" id="search_event" value="<?=isset( $params['search_event'] ) ? $params['search_event'] : ''?>" />
 </form>
 
 <? if ( isset( $events ) && ! empty( $events ) ): ?>

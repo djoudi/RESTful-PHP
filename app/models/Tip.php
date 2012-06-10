@@ -306,7 +306,7 @@ class Tip extends RESTful_Model {
 									->join( array( 'c' => $select_confidence ), $this->_name . '.eventname = c.eventname AND ' . $this->_name . '.marketid = c.marketid', array() )
 									->where( 'event_start >= NOW()' )
 									->where( $this->getTableName().'.eventname = "'.$event.'"' )
-									->order( $this->_name .'.marketid' );
+									->order( $this->_name .'.marketid' )->order( $this->_name .'.odds' );
 		
 		// echo $select; die;
 		return $this->cacheFetchAll( $select );

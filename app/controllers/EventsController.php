@@ -1,5 +1,7 @@
 <?
 class Events_RESTful_Controller extends RESTful_Controller {
+  
+  private $meta_data;
 	
 	public function index() {
 	
@@ -20,8 +22,20 @@ class Events_RESTful_Controller extends RESTful_Controller {
     if ( ! isset( $params['long'] ) ) $params['long'] = 0;
 
     $event = $this->Event->allByGeo( $params['lat'], $params['long'] );
-    if ( !empty( $event ) ) $event = $this->Tip->bygeo_event( $event[0]['eventname'], $event[0]['eventdate'] );
-    if ( empty( $event ) ) $event = array();
+    if ( !empty( $event ) ) {
+      $event = $this->Tip->bygeo_event( $event[0]['eventname'], $event[0]['eventdate'] );
+      $event = $event->toArray();
+      
+      if ( !empty($event) ) {
+        $venues = array( 'Major Race Course', 'Big Stadium', 'Huge Arena', 'Nice one', 'Famous Course', 'Some venue', 'Venue 1' );
+        $this->meta_data['venue'] = $venues[ array_rand( $venues ) ];
+      }
+    } 
+    //+TODO: remove the condition for returning empty testing data
+    if ( empty( $event ) || ( $params['lat'] == '-111' && $params['long'] == '-111' ) ) {
+      $event = array();
+      $this->meta_data = array();
+    }
 
     $this->respond( $event, 'tips', 'tip' );
   }
@@ -44,9 +58,9 @@ class Events_RESTful_Controller extends RESTful_Controller {
 
   }
 
-  protected function metaData( $response_val, $data_name = 'tips') {
+  protected function metaData( $response_val, $data_name = 'tips' ) {
 
-    return array(
+    return array_merge( array(
 
       'generated_at' 	          => date('Y-m-d H:i:s'),
       'generated_in' 	          => RESTful_Profiler::timeElapsed( 'init' ) . ' sec',
@@ -54,7 +68,8 @@ class Events_RESTful_Controller extends RESTful_Controller {
       'cached'				          => $this->Tip->wasLastQueryCached() !== false ? 'YES' : 'NO',
       'type'					          => $data_name
 
-    );
+    ), 
+    $this->meta_data );
 
   }
 
